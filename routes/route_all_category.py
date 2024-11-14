@@ -9,6 +9,7 @@ from sqlalchemy import desc
 from pprint import pprint
 from routes.route_user import blacklist_token_check
 
+
 router = APIRouter(
     prefix="/All-category",
     tags=["All-Category"],

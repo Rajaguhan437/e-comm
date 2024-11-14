@@ -1,12 +1,14 @@
 import streamlit as st
+import asyncio
+
+if 'page_config_set' not in st.session_state:
+    st.set_page_config(page_title="E-Commerce", layout="wide")
+    st.session_state.page_config_set = True
+
 from streamlit_option_menu import option_menu
 from web import about, category, sub_category, login
 from web.utils import sideBar
 
-st.set_page_config(
-    page_title="E-Commerce",
-    layout='wide',
-    )
 
 def hide_menu_style():
     return """
@@ -39,7 +41,7 @@ class MultiWeb:
             "function": function
         })
 
-def run():
+async def run():
 
     if 'logged_in' not in st.session_state:
         st.session_state.logged_in = False
@@ -59,5 +61,4 @@ def run():
         elif app == 'About':
             about.app()
         
-if __name__ == "__main__":
-    run()
+asyncio.run(run())

@@ -9,7 +9,7 @@ def sideBar(key):
             options=['Category', 'Sub Category', 'About'],
             icons=['shop', 'bag-heart-fill', 'info-square'],
             menu_icon='fast-forward',
-            default_index=0,
+            default_index=1,
             key=key
         )
         print("+++")

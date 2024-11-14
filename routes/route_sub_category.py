@@ -5,6 +5,8 @@ from auth.jwt_bearer import JWTBearer
 from database.schema import subCategoryDetails
 from database.model import  Category, Sub_Category, User
 from auth.jwt_handler import decodeJWT
+import json
+
 
 router = APIRouter(
     prefix="/sub-category",
@@ -47,5 +49,21 @@ def Create_subCategory(
         return {"status_code":200, **subcategoryDict}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
 
+
+@router.get(
+    "/read/{cat_id}",
+    description="Reading a New Sub-Category",
+    dependencies=[Depends(JWTBearer())]
+)
+def Create_subCategory(
+    cat_id: int,
+    db: Session = Depends(get_db),
+):
+    try:
+        subcategoryDetails = db.query(Sub_Category).filter(Sub_Category.cat_id == cat_id).all()
+
+        return json.dumps({"status_code":200, "details":subcategoryDetails})
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

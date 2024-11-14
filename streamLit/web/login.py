@@ -76,7 +76,7 @@ def app():
                 st.error(message['detail'])
             else:
                 with st.spinner("Processing..."):
-                    time.sleep(2)
+                    time.sleep(10)
                 
                 st.success("Account created successfully!", icon="✅")
                 st.balloons()

@@ -43,7 +43,7 @@ def login_api(username, password):
 
         cookie_manager.set(cookie="access_token", val=access_token, key="access")#, expires_at=3600)  # 1 hour
         cookie_manager.set(cookie="refresh_token", val=refresh_token, key="refresh")#, key="tokens")#, expires_at=7*24*3600)  # 7 days
-        print("**********")
+
         return {"status_code":200, "detail":"Log In Successful"}
 
     except requests.exceptions.RequestException as e:

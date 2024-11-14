@@ -9,30 +9,24 @@ JWT_REFRESH_SECRET = config("ref_secret")
 JWT_ALG = config("alg")
 
 # %%
-def encodeJWT(username: str, password: str, role: str, access_expire_time=None, refresh_expire_time=None):
+def encodeJWT(username: str, user_id: int, role: str, access_expire_time=None, refresh_expire_time=None):
 
     if not access_expire_time:
         access_expire_time = time.time() + 60 * 20
     if not refresh_expire_time:
         refresh_expire_time = time.time() + 60 * 60 * 24 * 7
     
-    access_payload = {
+    payload = {
         "username": username,
-        "password": password,
-        "role": role,
-        "exp" : access_expire_time
-        #"exp" : access_expire_time.strftime("%Y-%m-%d %H:%M:%S")
-    }
-    refresh_payload = {
-        "username": username,
-        "password": password,
-        "role": role,
-        "exp" : refresh_expire_time
-        #"exp" : refresh_expire_time.strftime("%Y-%m-%d %H:%M:%S")
+        "user_id": user_id,
+        "role": role
     }
 
-    access_token = jwt.encode(access_payload, JWT_ACCESS_SECRET, algorithm=JWT_ALG)
-    refresh_token = jwt.encode(refresh_payload, JWT_REFRESH_SECRET, algorithm=JWT_ALG)
+    payload["exp"] = access_expire_time
+    access_token = jwt.encode(payload, JWT_ACCESS_SECRET, algorithm=JWT_ALG)
+
+    payload["exp"] = refresh_expire_time
+    refresh_token = jwt.encode(payload, JWT_REFRESH_SECRET, algorithm=JWT_ALG)
 
     return {
         "access_token" : access_token,

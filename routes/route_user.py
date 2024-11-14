@@ -1,4 +1,3 @@
-
 from passlib.context import CryptContext
 from fastapi import APIRouter, Depends, HTTPException, Body, Request, Cookie, Response, File, UploadFile, status
 from sqlalchemy.orm import Session
@@ -74,7 +73,10 @@ def Sign_Up(
         db.add(userReg)
         db.commit()
         db.refresh(userReg)
-        tokens = encodeJWT(userDict["email"], userDict["password"], userDict["role"])
+
+        userDetail = db.query(User).filter(User.username == user.username).first()
+
+        tokens = encodeJWT(userDict["email"], userDetail.id, userDict["role"])
         msg = {"status_code":200, **tokens}
         #msg.set_cookie(key="refresh_token", value=tokens["refresh_token"])
         return msg
@@ -97,7 +99,7 @@ async def read_users(
 ):
     try:
         userDetails = db.query(User).offset(skip).limit(limit).all()
-        return userDetails
+        return {"Status_code":200, "details": userDetails}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     

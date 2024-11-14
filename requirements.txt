@@ -23,3 +23,5 @@ aiofiles
 streamlit
 streamlit_option_menu
 extra-streamlit-components
+streamlit-card
+bcrypt

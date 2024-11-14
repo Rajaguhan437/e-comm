@@ -1,67 +1,186 @@
 import streamlit as st
+import pandas as pd
 import json
-from streamlit_option_menu import option_menu
-
-from api.protectedAPI import make_authenticated_request, logout
+from api.protectedAPI import make_authenticated_request
 from web.utils import sideBar
 
-
-def display_category(category):
-    """Displays a single category with an image, title, and button."""
-    st.markdown(
-        f"""
-        <div style="
-            padding: 50px;
-            border-radius: 10px;
-            # border: 1px solid #ddd;
-            margin: 10px 0;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-            height:400px;
-            display: flex;
-            justify-item: center;
-        ">
-            <img src="{category['cat_img']}" alt="{category['cat_name']} width="200" height="300" style="
-                width: 100%; /* Adjust as needed */
-                height: auto;
-                display:block;
-                margimgin-bottom: 10px;
-                border-radius: 5px;
-            ">
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-    if st.button(f"Browse {category['cat_name']}", key=f"btn_{category['cat_name']}", use_container_width=True,):
-        st.session_state.current_category = category['cat_name']
-        
-
-def display_categories(categories):
-    col1, col2, col3, col4 = st.columns(4, gap="large", vertical_alignment="center")
-    columns = [col1, col2, col3, col4]
-    
-    for i, category in enumerate(categories):
-        with columns[i % 4]:
-            with st.container():
-                display_category(category)
-
-def sidebar_filters():
-    app = sideBar("category")
-
-    st.sidebar.markdown("### Quick Search")
-    search_term = st.sidebar.text_input("Search categories...")
-
-    st.sidebar.markdown("### Filters")
-    price_range = st.sidebar.slider("Price Range ($)", 0, 1000, (0, 1000))
-    sort_by = st.sidebar.selectbox("Sort By", ["Popularity", "Price: Low to High", "Price: High to Low", "Newest First"])
-
 def app():
-    st.header('Categories 🛍️')
+    st.session_state.page = 'category'
+
+    st.markdown("""
+    <style>
+    .category-card {
+        border-radius: 10px;
+        padding: 20px;
+        margin: 30px;
+        background-color: white;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s;
+        cursor: pointer;
+    }
+    .category-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    }
+    .category-image {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+        border-radius: 8px;
+        margin-bottom: 15px;
+    }
+    .category-title {
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin: 0;
+        color: #1a1a1a;
+    }
+    .category-meta {
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center; 
+        font-size: 0.9rem;
+        color: #666;
+        margin-top: 10px;
+    }
+    .status-badge {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 4px;
+        background: #e7f7ef;
+        color: #0f5132;
+        font-size: 0.8rem;
+    }
+    .stats-container {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        margin-bottom: 20px;
+        color: black;
+    }
+    div.stButton > button{
+        background-color: black;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 5px;
+        margin-left: 25%;
+        border: none;
+        cursor: pointer;
+        width: 50%;
+    }
+    div.stButton > button p{
+    font-size: 20px !important; 
+    font-weight: bold !important; 
+    text-align: center; 
+    }
+    div.stButton > button:hover {
+        background-color: white;
+        color: green; 
+        transform: scale(1.1);
+    }
+
+    </style>
+    """, unsafe_allow_html=True)
+
+    if 'selected_category' not in st.session_state:
+        st.session_state.selected_category = None
+
+    st.title("Product Categories")
+
+    with st.container():
+        col1, col2, col3 = st.columns(3, gap="medium")
+        
+        with col1:
+            st.markdown("""
+            <div class="stats-container">
+                <h3>Total Categories</h3>
+                <h2>8</h2>
+            </div>
+            """, unsafe_allow_html=True)
+            
+        with col2:
+            st.markdown("""
+            <div class="stats-container">
+                <h3>Active Categories</h3>
+                <h2>8</h2>
+            </div>
+            """, unsafe_allow_html=True)
+            
+        with col3:
+            st.markdown("""
+            <div class="stats-container">
+                <h3>Total Products</h3>
+                <h2>283</h2>
+            </div>
+            """, unsafe_allow_html=True)
+
+
+    col1, col2, col3 = st.columns([4, 2, 1], vertical_alignment='center')
+    with col1:
+        search = st.text_input("Search categories...", "")
+    with col2:
+        sort_by = st.selectbox("Sort by", ["Name", "Date Created"])
+    with col3:
+        if st.button("+ Add Category", key="add_cat_btn"):
+            st.session_state.page = "add_category"
 
     response = make_authenticated_request("category/read/", "get")
-    categories =  json.loads(response.content.decode())
-    sidebar_filters()
-    display_categories(categories)
+    if response['status_code']==200:
+        categories = json.loads(response['content'].decode())
+    else:
+        raise {"status_code":500, "detail":"Not Authenticated, Please Log In"}
 
 
+    # Filter categories based on search
+    if search:
+        categories = [c for c in categories if search.lower() in c["cat_name"].lower()]
+
+    # Sort categories
+    if sort_by == "Name":
+        categories.sort(key=lambda x: x["cat_name"])
+    elif sort_by == "Date Created":
+        categories.sort(key=lambda x: x["created_at"], reverse=True)
+
+    # Display categories in grid
+    cols = st.columns(3)
+    for idx, category in enumerate(categories):
+        with cols[idx % 3]:
+            # Create clickable card
+            card_clicked = st.container()
+            with card_clicked:
+                st.markdown(f"""
+                <div class="category-card">
+                    <div class="category-title"><h3>{category['cat_name']}</h3></div>
+                    <img src="{category['cat_img']}" class="category-image" alt="{category['cat_name']}">
+                    <div class="category-meta">
+                        <div class="status-badge">{'Active' if category['is_active'] else 'Inactive'}</div>
+                        <p>Created: {category['created_at'].split('T')[0]}</p>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+
+
+                if st.button("View Subcategories", key=f"cat_{category['cat_id']}", use_container_width=True):
+                    st.session_state.selected_category = category['cat_id']
+                    # Navigate to sub_category page
+                    st.session_state.page = "Sub Category"
+                    st.experimental_rerun()
+
+
+    # Handle navigation to subcategory page
+    if st.session_state.selected_category is not None:
+        st.session_state.page = "Sub Category"
+    
+        # The sub_category.app() function will handle the display of subcategories
+    # with st.sidebar:
+    # st.markdown("**Total Products: 5**")
+    # st.header("QuickCart")
+
+    # # Sidebar menu items with icons as clickable buttons
+    # if st.button("🛒 Category"):
+    #     st.session_state["page"] = "Category"
+    # elif st.button("👜 Sub Category"):
+    #     st.session_state["page"] = "Sub Category"
+    # elif st.button("ℹ️ About"):
+    #     st.session_state["page"] = "About"

@@ -43,7 +43,6 @@ class User(Base):
     password = Column(String, nullable=False)
     role = Column(Enum(User_Role))
 
-
 class Details(Base):
     __abstract__ = True
 

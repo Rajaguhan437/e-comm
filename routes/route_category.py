@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Body, Request
 from sqlalchemy.orm import Session
 from database.database import get_db
 from auth.jwt_bearer import JWTBearer
-from database.schema import detailsInfo, categoryDetails, subCategoryDetails
+from database.schema import detailsInfo, categoryDetails, subCategoryDetails, editCategoryDetails
 from database.model import Details, Category, Sub_Category, User
 from auth.jwt_handler import decodeJWT
 
@@ -26,13 +26,12 @@ def Create_Category(
         token = request.headers.get("authorization")[7:]
         payload_dict = decodeJWT(token)
 
-        username = payload_dict["username"]
-        details = db.query(User).filter(User.username == username).first()
+        user_id = payload_dict["user_id"]
 
         categoryDict = {
             "cat_name" : category.cat_name,
-            "created_by": details.id,
-            "cat_img": category.cat_img
+            "created_by": user_id,
+            "cat_img": category.cat_img,
             }
         categoryCreate = Category(**categoryDict) 
         
@@ -61,3 +60,35 @@ def Read_Category(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
+
+@router.put(
+    "/edit",
+    description="Editing the items in Category",
+    dependencies=[Depends(JWTBearer())]
+)
+def Edit_Category(
+    editDetails: editCategoryDetails,
+    db: Session = Depends(get_db)
+):
+
+    if not data:
+        raise HTTPException(
+            status_code=400,
+            detail="data not found"
+        )
+    
+    if editDetails.cat_name:
+        data.cat_name = editDetails.cat_name
+    if editDetails.cat_img:
+        data.cat_id = editDetails.cat_img
+    if editDetails.is_active:
+        data.is_active = editDetails.is_active
+    
+    data = db.query(Category).filter(Category.cat_name == editDetails.cat_name).update(
+        {
+
+        }
+    )
+
+    db.commit()
+    db.refresh(data)

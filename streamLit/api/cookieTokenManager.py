@@ -3,7 +3,6 @@ import requests
 import extra_streamlit_components as stx
 import uuid
 
-
 url = "http://127.0.0.1:8000/"
 
 cookie_manager = stx.CookieManager(key="key"+str(uuid.uuid1()))
@@ -21,15 +20,17 @@ def is_logged_in():
     return bool(tokens.get("access_token"))
 
 def del_access_token():
-    cookie_manager.delete("access_token", key="access_token")
-
+    pass
 def del_refresh_token():
-    cookie_manager.delete("refresh_token", key="refresh_token")
+    pass
 
 def logout():
     st.session_state.logged_in = False
-    del_access_token()
-    del_refresh_token()  ## second token not getting deleted
+    #del_access_token()
+    #del_refresh_token()  ## second token not getting deleted
+    unique_id = str(uuid.uuid4())  # Generate a unique identifier for each logout
+    cookie_manager.delete("access_token", key=f"del_access_token_{unique_id}")
+    cookie_manager.delete("refresh_token", key=f"del_refresh_token_{unique_id}")
 
 def refresh_access_token():
 
